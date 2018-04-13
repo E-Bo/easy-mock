@@ -26,6 +26,11 @@
               <Form-item :label="$t('p.detail.editor.autoClose')" v-if="isEdit">
                 <i-switch v-model="autoClose"></i-switch>
               </Form-item>
+              <Form-item label="plan">
+                <i-select v-model="temp.plan">
+                  <Option v-for="item in plans" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                </i-select>
+              </Form-item>
               <Form-item>
                 <Button type="primary" long @click="submit">{{isEdit ? $t('p.detail.editor.action[0]') : $t('p.detail.editor.action[1]')}}</Button>
               </Form-item>
@@ -49,6 +54,7 @@
 <script>
 import * as api from '../../api'
 import jsBeautify from 'js-beautify/js/lib/beautify'
+// import { setTimeout } from 'timers';
 let ace
 
 if (typeof window !== 'undefined') {
@@ -79,8 +85,11 @@ export default {
         url: '',
         mode: '',
         method: '',
-        description: ''
-      }
+        description: '',
+        plan: ''
+      },
+      plans: [],
+      updateId: 0
     }
   },
   computed: {
@@ -117,16 +126,28 @@ export default {
           this.temp.mode = this.value.mode
           this.temp.method = this.value.method
           this.temp.description = this.value.description
+          this.temp.plan = this.value.plan
           this.codeEditor.setValue(this.temp.mode)
         } else {
           this.temp.url = ''
           this.temp.mode = '{"data": {}}'
           this.temp.method = 'get'
           this.temp.description = ''
+          this.temp.plan = ''
           this.codeEditor.setValue(this.temp.mode)
         }
         this.format()
       }
+      this.rebuildPlans()
+    },
+    'temp.mode': function () {
+      let myId = Math.random()
+      this.updateId = myId
+      window.setTimeout(() => {
+        if (this.updateId === myId) {
+          this.rebuildPlans()
+        }
+      }, 1000)
     }
   },
   methods: {
@@ -182,6 +203,7 @@ export default {
             this.value.mode = this.temp.mode
             this.value.method = this.temp.method
             this.value.description = this.temp.description
+            this.value.plan = this.temp.plan
             if (this.autoClose) this.close()
           }
         })
@@ -200,6 +222,28 @@ export default {
     },
     preview () {
       window.open(this.$parent.baseUrl + this.value.url + '#!method=' + this.value.method)
+    },
+    rebuildPlans () {
+      if (this.temp.mode) {
+        try {
+          let mode = JSON.parse(this.temp.mode)
+          this.plans = []
+          for (let i in mode.data) {
+            this.plans.push(
+              {
+                label: i,
+                value: i
+              }
+            )
+          }
+          this.plans.push({
+            label: 'directOut',
+            value: 'directOut'
+          })
+        } catch (e) {
+          console.error(e)
+        }
+      }
     }
   }
 }

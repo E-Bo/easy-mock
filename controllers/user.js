@@ -52,7 +52,8 @@ module.exports = class UserController {
           description: item.desc,
           method: item.method,
           url: item.url,
-          mode: item.mode
+          mode: item.mode,
+          plan: 'directOut'
         }))
         MockProxy.newAndSave(apis)
       })

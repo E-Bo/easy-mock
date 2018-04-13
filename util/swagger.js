@@ -52,7 +52,8 @@ async function createMock (projectId, swaggerDocs) {
           parameters,
           response_model: responseModel,
           description: desc,
-          project: projectId
+          project: projectId,
+          plan: 'directOut'
         })
         continue
       }
@@ -70,6 +71,7 @@ async function createMock (projectId, swaggerDocs) {
       api.method = method
       api.url = fullAPIPath
       api.description = desc
+      api.plan = 'directOut'
       api.parameters = parameters
       api.response_model = responseModel
       newKeys = newKeys.filter(key => !/\[[1-9]\d*\]/.test(key))

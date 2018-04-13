@@ -58,6 +58,7 @@ module.exports = class MockController {
     const description = ctx.checkBody('description').notEmpty().value
     const url = ctx.checkBody('url').notEmpty().match(/^\/.*$/i, 'URL 必须以 / 开头').value
     const method = ctx.checkBody('method').notEmpty().toLow().in(['get', 'post', 'put', 'delete', 'patch']).value
+    const plan = ctx.checkBody('plan').notEmpty().value
 
     if (ctx.errors) {
       ctx.body = ctx.util.refail(null, 10001, ctx.errors)
@@ -87,7 +88,8 @@ module.exports = class MockController {
       description,
       method,
       url,
-      mode
+      mode,
+      plan
     })
 
     await redis.del('project:' + projectId)
@@ -129,6 +131,8 @@ module.exports = class MockController {
         method: keyExp
       }, {
         mode: keyExp
+      }, {
+        plan: keyExp
       }]
     }
 
@@ -161,6 +165,7 @@ module.exports = class MockController {
     const description = ctx.checkBody('description').notEmpty().value
     const url = ctx.checkBody('url').notEmpty().match(/^\/.*$/i, 'URL 必须以 / 开头').value
     const method = ctx.checkBody('method').notEmpty().toLow().in(['get', 'post', 'put', 'delete', 'patch']).value
+    const plan = ctx.checkBody('plan').notEmpty().value
 
     if (ctx.errors) {
       ctx.body = ctx.util.refail(null, 10001, ctx.errors)
@@ -180,6 +185,7 @@ module.exports = class MockController {
     api.mode = mode
     api.method = method
     api.description = description
+    api.plan = plan
 
     const existMock = await MockProxy.findOne({
       _id: { $ne: api.id },
@@ -204,13 +210,14 @@ module.exports = class MockController {
    */
 
   static async getMockAPI (ctx) {
+    console.log('ctx', ctx)
     const { query, body } = ctx.request
     const method = ctx.method.toLowerCase()
     const jsonpCallback = query.jsonp_param_name && (query[query.jsonp_param_name] || 'callback')
     let { projectId, mockURL } = ctx.pathNode
     const redisKey = 'project:' + projectId
     let apiData, apis, api
-
+    console.log('hu-1')
     apis = await redis.get(redisKey)
 
     if (apis) {
@@ -225,9 +232,11 @@ module.exports = class MockController {
     }
 
     api = apis.filter((item) => {
+      console.log('hu-2')
       const url = item.url.replace(/{/g, ':').replace(/}/g, '') // /api/{user}/{id} => /api/:user/:id
       return item.method === method && pathToRegexp(url).test(mockURL)
     })[0]
+    console.log('hu-2-1', api)
 
     if (!api) ctx.throw(404)
 
@@ -268,7 +277,6 @@ module.exports = class MockController {
 
       vm.run('Mock.mock(new Function("return " + mode)())') // 数据验证，检测 setTimeout 等方法
       apiData = vm.run('Mock.mock(template())') // 解决正则表达式失效的问题
-
       /* istanbul ignore else */
       if (apiData._res) { // 自定义响应 Code
         let _res = apiData._res
@@ -294,13 +302,19 @@ module.exports = class MockController {
     }
 
     await redis.lpush('mock.count', api._id)
+    console.log('hu-3')
     if (jsonpCallback) {
       ctx.type = 'text/javascript'
       ctx.body = `${jsonpCallback}(${JSON.stringify(apiData, null, 2)})`
         .replace(/\u2028/g, '\\u2028')
         .replace(/\u2029/g, '\\u2029') // JSON parse vs eval fix. https://github.com/rack/rack-contrib/pull/37
     } else {
-      ctx.body = apiData
+      console.log('hu-3-1', apiData, api.plan)
+      if (api.plan === 'directOut') {
+        ctx.body = apiData
+      } else {
+        ctx.body = { 'data': apiData['data'][api.plan] }
+      }
     }
   }
 
@@ -310,7 +324,7 @@ module.exports = class MockController {
    */
 
   static async getAPIByProjectIds (ctx) {
-    let projectIds = ctx.checkQuery('project_ids').notEmpty().value
+    let projectIds = ctx.checkQuery('project_ids').notdirectOut().value
 
     if (ctx.errors) {
       ctx.body = ctx.util.refail(null, 10001, ctx.errors)

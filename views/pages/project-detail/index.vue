@@ -130,6 +130,7 @@ export default {
           type: 'expand',
           width: 50,
           render: (h, params) => {
+            console.log(1, params)
             return h(MockExpand, {
               props: {
                 mock: params.row
@@ -165,14 +166,34 @@ export default {
             </tag>
           }
         },
-        { title: 'URL', width: 420, ellipsis: true, sortable: true, key: 'url' },
+        { title: 'URL', width: 360, ellipsis: true, sortable: true, key: 'url' },
         { title: this.$t('p.detail.columns[0]'), ellipsis: true, key: 'description' },
+        { title: 'plan',
+          key: 'plan',
+          width: 100,
+          align: 'center',
+          render: (h, params) => {
+            console.log(h, params)
+            return (
+              <div>
+                <dropdown>
+                  <i-button size="small">{params.row.plan}</i-button>
+                  <dropdown-menu slot="list">
+                    <dropdown-item nativeOnClick={this.clone.bind(this, params.row)}><icon type="ios-copy"></icon> {this.$t('p.detail.action[3]')}</dropdown-item>
+                    <dropdown-item nativeOnClick={this.download.bind(this, params.row._id)}><icon type="ios-download"></icon> {this.$tc('p.detail.download', 2)}</dropdown-item>
+                  </dropdown-menu>
+                </dropdown>
+              </div>
+            )
+          }
+        },
         {
           title: this.$t('p.detail.columns[1]'),
           key: 'action',
           width: 160,
           align: 'center',
           render: (h, params) => {
+            console.log(5, params)
             return (
               <div>
                 <Button-group>
@@ -210,6 +231,7 @@ export default {
     },
     list () {
       const list = this.$store.state.mock.list
+      console.log('find', list)
       const reg = this.keywords && new RegExp(this.keywords, 'i')
       return reg
         ? list.filter(item => (
