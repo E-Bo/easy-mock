@@ -174,13 +174,26 @@ export default {
           align: 'center',
           render: (h, params) => {
             console.log(h, params)
+            var planslist = []
+            if (params.row.mode) {
+              try {
+                let mode = JSON.parse(params.row.mode)
+                for (let i in mode.data) {
+                  planslist.push(i)
+                }
+                planslist.push('directOut')
+              } catch (e) {
+                console.error(e)
+              }
+            }
             return (
               <div>
                 <dropdown>
                   <i-button size="small">{params.row.plan}</i-button>
                   <dropdown-menu slot="list">
-                    <dropdown-item nativeOnClick={this.clone.bind(this, params.row)}><icon type="ios-copy"></icon> {this.$t('p.detail.action[3]')}</dropdown-item>
-                    <dropdown-item nativeOnClick={this.download.bind(this, params.row._id)}><icon type="ios-download"></icon> {this.$tc('p.detail.download', 2)}</dropdown-item>
+                    {planslist.map((plancell) => {
+                      return <dropdown-item >{plancell}</dropdown-item>
+                    })}
                   </dropdown-menu>
                 </dropdown>
               </div>
