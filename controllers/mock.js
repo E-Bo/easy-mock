@@ -309,7 +309,6 @@ module.exports = class MockController {
         .replace(/\u2028/g, '\\u2028')
         .replace(/\u2029/g, '\\u2029') // JSON parse vs eval fix. https://github.com/rack/rack-contrib/pull/37
     } else {
-      console.log('hu-3-1', apiData, api.plan)
       if (api.plan === 'directOut') {
         ctx.body = apiData
       } else {
