@@ -31,7 +31,6 @@ export default {
         }
       }).then((res) => {
         if (res.data.success) {
-          console.log('=======>>>>><<<<<<<<<', res)
           commit('SET_VALUE', res.data.data)
           state.pageIndex += 1
           commit('SET_REQUEST_PARAMS', { pageIndex: state.pageIndex })

@@ -210,16 +210,13 @@ module.exports = class MockController {
    */
 
   static async getMockAPI (ctx) {
-    console.log('ctx', ctx)
     const { query, body } = ctx.request
     const method = ctx.method.toLowerCase()
     const jsonpCallback = query.jsonp_param_name && (query[query.jsonp_param_name] || 'callback')
     let { projectId, mockURL } = ctx.pathNode
     const redisKey = 'project:' + projectId
     let apiData, apis, api
-    console.log('hu-1')
     apis = await redis.get(redisKey)
-
     if (apis) {
       apis = JSON.parse(apis)
     } else {
@@ -232,12 +229,9 @@ module.exports = class MockController {
     }
 
     api = apis.filter((item) => {
-      console.log('hu-2')
       const url = item.url.replace(/{/g, ':').replace(/}/g, '') // /api/{user}/{id} => /api/:user/:id
       return item.method === method && pathToRegexp(url).test(mockURL)
     })[0]
-    console.log('hu-2-1', api)
-
     if (!api) ctx.throw(404)
 
     Mock.Handler.function = function (options) {
@@ -300,16 +294,14 @@ module.exports = class MockController {
         delete apiData['_res']
       }
     }
-
     await redis.lpush('mock.count', api._id)
-    console.log('hu-3')
     if (jsonpCallback) {
       ctx.type = 'text/javascript'
       ctx.body = `${jsonpCallback}(${JSON.stringify(apiData, null, 2)})`
         .replace(/\u2028/g, '\\u2028')
         .replace(/\u2029/g, '\\u2029') // JSON parse vs eval fix. https://github.com/rack/rack-contrib/pull/37
     } else {
-      if (api.plan === 'directOut') {
+      if (!api.plan || apiData['data'][api.plan] === undefined || api.plan === 'directOut') {
         ctx.body = apiData
       } else {
         ctx.body = { 'data': apiData['data'][api.plan] }

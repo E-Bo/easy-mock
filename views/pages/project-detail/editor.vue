@@ -54,6 +54,7 @@
 <script>
 import * as api from '../../api'
 import jsBeautify from 'js-beautify/js/lib/beautify'
+// import { constants } from 'http2';
 // import { setTimeout } from 'timers';
 let ace
 
@@ -226,7 +227,7 @@ export default {
     rebuildPlans () {
       if (this.temp.mode) {
         try {
-          let mode = JSON.parse(this.temp.mode)
+          let mode = JSON.parse(this.deleteAnnotation(this.temp.mode))
           this.plans = []
           for (let i in mode.data) {
             this.plans.push(
@@ -244,6 +245,10 @@ export default {
           console.error(e)
         }
       }
+    },
+    deleteAnnotation (str) {
+      let reg = /\n[\s]*\/\/[\s]*.*/g
+      return str.replace(reg, '')
     }
   }
 }

@@ -130,7 +130,6 @@ export default {
           type: 'expand',
           width: 50,
           render: (h, params) => {
-            console.log(1, params)
             return h(MockExpand, {
               props: {
                 mock: params.row
@@ -168,16 +167,15 @@ export default {
         },
         { title: 'URL', width: 360, ellipsis: true, sortable: true, key: 'url' },
         { title: this.$t('p.detail.columns[0]'), ellipsis: true, key: 'description' },
-        { title: 'plan',
+        { title: 'Plan',
           key: 'plan',
           width: 100,
           align: 'center',
           render: (h, params) => {
-            console.log(h, params)
             var planslist = []
             if (params.row.mode) {
               try {
-                let mode = JSON.parse(params.row.mode)
+                let mode = JSON.parse(this.deleteAnnotation(params.row.mode))
                 for (let i in mode.data) {
                   planslist.push(i)
                 }
@@ -192,7 +190,7 @@ export default {
                   <i-button size="small">{params.row.plan}</i-button>
                   <dropdown-menu slot="list">
                     {planslist.map((plancell) => {
-                      return <dropdown-item >{plancell}</dropdown-item>
+                      return <dropdown-item nativeOnClick={this.updateMockPlan.bind(this, params.row, plancell)}>{plancell}</dropdown-item>
                     })}
                   </dropdown-menu>
                 </dropdown>
@@ -206,7 +204,6 @@ export default {
           width: 160,
           align: 'center',
           render: (h, params) => {
-            console.log(5, params)
             return (
               <div>
                 <Button-group>
@@ -244,7 +241,6 @@ export default {
     },
     list () {
       const list = this.$store.state.mock.list
-      console.log('find', list)
       const reg = this.keywords && new RegExp(this.keywords, 'i')
       return reg
         ? list.filter(item => (
@@ -360,6 +356,27 @@ export default {
     openEditor (mock) {
       this.editor = mock || {}
       this.$set(this.editor, 'show', true)
+    },
+    deleteAnnotation (str) {
+      let reg = /\n[\s]*\/\/[\s]*.*/g
+      return str.replace(reg, '')
+    },
+    updateMockPlan (mock, plan) {
+      mock.plan = plan
+      api.mock.update({
+        data: {
+          description: mock.description,
+          id: mock._id,
+          method: mock.method,
+          mode: mock.mode,
+          plan: mock.plan,
+          url: mock.url
+        }
+      }).then((res) => {
+        if (res.data.success) {
+          this.$Message.success(this.$t('p.detail.editor.submit.updateSuccess'))
+        }
+      })
     }
   },
   components: {
